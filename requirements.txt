@@ -1,0 +1,38 @@
+# # Discord
+# discord.py>=2.3.2
+
+# # Audio playback
+# yt-dlp>=2024.1.1
+# PyNaCl>=1.5.0
+
+# # Async SQLite
+# aiosqlite>=0.19.0
+
+# # Spotify (optional)
+# spotipy>=2.23.0
+
+# # AI features (optional)
+# openai>=1.30.0
+
+# # Lyrics (optional)
+# lyricsgenius>=3.0.1
+
+# # Web dashboard (optional)
+# fastapi>=0.111.0
+# uvicorn[standard]>=0.29.0
+
+# # Environment
+# python-dotenv>=1.0.0
+
+discord.py
+PyNaCl
+yt-dlp
+python-dotenv
+spotipy
+lyricsgenius
+aiohttp
+aiosqlite
+fastapi
+uvicorn
+openai
+flask

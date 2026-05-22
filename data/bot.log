@@ -1,0 +1,33 @@
+2026-05-23 01:01:38 [INFO] musicbot: FFmpeg executable: C:\Users\satya\Downloads\ffmpeg-8.1.1-essentials_build\ffmpeg-8.1.1-essentials_build\bin\ffmpeg.EXE
+2026-05-23 01:01:38 [INFO] musicbot: ✅ Opus loaded from file: C:\Users\satya\Downloads\discord-music-bot-v5\libopus-0.x64.dll
+2026-05-23 01:01:39 [INFO] musicbot: ✅ Spotify client ready
+2026-05-23 01:01:39 [INFO] musicbot: ✅ Loaded: cogs.music
+2026-05-23 01:01:39 [INFO] musicbot: ✅ Loaded: cogs.queue
+2026-05-23 01:01:40 [INFO] musicbot: ✅ Loaded: cogs.ai_dj
+2026-05-23 01:01:40 [INFO] musicbot: ✅ Loaded: cogs.filters
+2026-05-23 01:01:40 [INFO] musicbot: ✅ Loaded: cogs.playlist
+2026-05-23 01:01:40 [INFO] musicbot: ✅ Loaded: cogs.social
+2026-05-23 01:01:40 [INFO] musicbot: ✅ Loaded: cogs.dashboard
+2026-05-23 01:01:40 [ERROR] musicbot: ❌ Failed to load cogs.lyrics: Extension 'cogs.lyrics' raised an error: TypeError: Genius.__init__() got an unexpected keyword argument 'verbose'
+2026-05-23 01:01:40 [INFO] musicbot: ✅ Loaded: cogs.radio
+2026-05-23 01:01:40 [INFO] musicbot: ✅ Loaded: cogs.admin
+2026-05-23 01:01:46 [INFO] musicbot: ✅ Logged in as SATTU BHAI#9306 (ID: 1404281488513433652)
+2026-05-23 01:01:46 [INFO] musicbot: ✅ Database initialized
+2026-05-23 01:01:50 [INFO] musicbot: ✅ Slash commands synced to 4 guild(s)
+2026-05-23 01:04:21 [INFO] musicbot: FFmpeg executable: C:\Users\satya\Downloads\ffmpeg-8.1.1-essentials_build\ffmpeg-8.1.1-essentials_build\bin\ffmpeg.EXE
+2026-05-23 01:04:21 [INFO] musicbot: ✅ Opus loaded from file: C:\Users\satya\Downloads\discord-music-bot-v5\libopus-0.x64.dll
+2026-05-23 01:04:22 [INFO] musicbot: ✅ Spotify client ready
+2026-05-23 01:04:22 [INFO] musicbot: ✅ Loaded: cogs.music
+2026-05-23 01:04:22 [INFO] musicbot: ✅ Loaded: cogs.queue
+2026-05-23 01:04:23 [INFO] musicbot: ✅ Loaded: cogs.ai_dj
+2026-05-23 01:04:23 [INFO] musicbot: ✅ Loaded: cogs.filters
+2026-05-23 01:04:23 [INFO] musicbot: ✅ Loaded: cogs.playlist
+2026-05-23 01:04:23 [INFO] musicbot: ✅ Loaded: cogs.social
+2026-05-23 01:04:23 [INFO] musicbot: ✅ Loaded: cogs.dashboard
+2026-05-23 01:04:23 [ERROR] musicbot: ❌ Failed to load cogs.lyrics: Extension 'cogs.lyrics' raised an error: TypeError: Genius.__init__() got an unexpected keyword argument 'verbose'
+2026-05-23 01:04:23 [INFO] musicbot: ✅ Loaded: cogs.radio
+2026-05-23 01:04:23 [INFO] musicbot: ✅ Loaded: cogs.admin
+2026-05-23 01:04:29 [INFO] musicbot: ✅ Logged in as SATTU BHAI#9306 (ID: 1404281488513433652)
+2026-05-23 01:04:29 [INFO] musicbot: ✅ Database initialized
+2026-05-23 01:04:32 [INFO] musicbot: ✅ Slash commands synced to 4 guild(s)
+2026-05-23 01:04:49 [INFO] musicbot: Joined VC: 〢General VC in Massive eSports 🇮🇳
