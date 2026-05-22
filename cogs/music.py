@@ -435,12 +435,13 @@
 
 """
 Music Cog — Core playback engine using yt-dlp + discord.py voice
-Optimized for Railway / Linux hosting
+Stable Railway Version
 """
 
 import discord
 from discord.ext import commands
 from discord import app_commands
+
 import asyncio
 import yt_dlp
 import os
@@ -454,53 +455,52 @@ from utils.logger import setup_logger
 logger = setup_logger()
 
 # ─────────────────────────────────────────────────────────────
-# YT-DLP CONFIG
+# YT-DLP OPTIONS
 # ─────────────────────────────────────────────────────────────
 
 COOKIES_FILE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__)
+        )
+    ),
     "cookies.txt"
 )
 
 def build_ytdl_options():
 
     opts = {
-        "format": "bestaudio[ext=m4a]/bestaudio/best",
+        "format": "bestaudio/best",
+
         "noplaylist": False,
+
         "nocheckcertificate": True,
+
         "ignoreerrors": False,
-        "logtostderr": False,
+
         "quiet": True,
+
         "no_warnings": True,
+
         "default_search": "ytsearch",
+
         "source_address": "0.0.0.0",
 
-        "http_headers": {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0.0.0 Safari/537.36"
-            )
-        },
+        "extract_flat": False,
 
-        "extractor_args": {
-            "youtube": {
-                "player_client": [
-                    "android",
-                    "web",
-                    "tv_embedded"
-                ]
-            }
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0"
         }
     }
 
     if os.path.isfile(COOKIES_FILE):
         opts["cookiefile"] = COOKIES_FILE
-        logger.info(f"Using cookies: {COOKIES_FILE}")
+        logger.info(f"Using cookies file: {COOKIES_FILE}")
 
     return opts
 
 YTDL_OPTIONS = build_ytdl_options()
+
 ytdl = yt_dlp.YoutubeDL(YTDL_OPTIONS)
 
 # ─────────────────────────────────────────────────────────────
@@ -513,6 +513,7 @@ FFMPEG_OPTIONS = {
         "-reconnect_streamed 1 "
         "-reconnect_delay_max 5"
     ),
+
     "options": (
         "-vn "
         "-bufsize 64k"
@@ -528,19 +529,25 @@ class Music(commands.Cog):
     def __init__(self, bot):
 
         self.bot = bot
+
         self.players = {}
 
-        # Spotify
         self.spotify = None
 
+        # ── Spotify ──────────────────────────────────────────
+
         try:
+
             import spotipy
+
             from spotipy.oauth2 import SpotifyClientCredentials
 
             sp_id = os.getenv("SPOTIFY_CLIENT_ID")
+
             sp_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
 
             if sp_id and sp_secret:
+
                 self.spotify = spotipy.Spotify(
                     auth_manager=SpotifyClientCredentials(
                         client_id=sp_id,
@@ -551,6 +558,7 @@ class Music(commands.Cog):
                 logger.info("✅ Spotify Ready")
 
         except Exception as e:
+
             logger.warning(f"Spotify unavailable: {e}")
 
     # ─────────────────────────────────────────────────────────
@@ -558,6 +566,7 @@ class Music(commands.Cog):
     def get_player(self, guild_id):
 
         if guild_id not in self.players:
+
             self.players[guild_id] = MusicPlayer(guild_id)
 
         return self.players[guild_id]
@@ -566,6 +575,7 @@ class Music(commands.Cog):
 
     @property
     def ffmpeg(self):
+
         return getattr(self.bot, "ffmpeg_path", "ffmpeg")
 
     # ─────────────────────────────────────────────────────────
@@ -575,33 +585,38 @@ class Music(commands.Cog):
     async def ensure_voice(self, interaction):
 
         if not interaction.user.voice:
+
             await interaction.followup.send(
                 embed=MusicEmbed.error(
                     "Join a voice channel first!"
                 ),
                 ephemeral=True
             )
+
             return False
 
         channel = interaction.user.voice.channel
+
         vc = interaction.guild.voice_client
 
         try:
 
             if vc is None:
+
                 await channel.connect(
                     timeout=20,
                     reconnect=True
                 )
 
             elif vc.channel != channel:
+
                 await vc.move_to(channel)
 
             return True
 
         except Exception as e:
 
-            logger.error(f"VC connect error: {e}")
+            logger.error(f"Voice Connect Error: {e}")
 
             await interaction.followup.send(
                 embed=MusicEmbed.error(
@@ -620,6 +635,7 @@ class Music(commands.Cog):
         name="play",
         description="Play a song"
     )
+
     async def play(
         self,
         interaction: discord.Interaction,
@@ -632,6 +648,7 @@ class Music(commands.Cog):
             return
 
         player = self.get_player(interaction.guild_id)
+
         player.text_channel = interaction.channel
 
         songs = await self.resolve_query(
@@ -643,11 +660,12 @@ class Music(commands.Cog):
 
             return await interaction.followup.send(
                 embed=MusicEmbed.error(
-                    f"No results for:\n`{query}`"
+                    f"No results found for:\n`{query}`"
                 )
             )
 
         for song in songs:
+
             await player.queue.put(song)
 
         await interaction.followup.send(
@@ -659,26 +677,43 @@ class Music(commands.Cog):
 
         vc = interaction.guild.voice_client
 
-        if not vc.is_playing():
+        if vc and not vc.is_playing():
+
             await self.play_next(interaction.guild)
 
     # ─────────────────────────────────────────────────────────
     # QUERY RESOLVER
     # ─────────────────────────────────────────────────────────
 
-    async def resolve_query(self, query, requester):
+    async def resolve_query(
+        self,
+        query,
+        requester
+    ):
 
         if "spotify.com" in query and self.spotify:
-            return await self.resolve_spotify(query, requester)
+
+            return await self.resolve_spotify(
+                query,
+                requester
+            )
 
         elif re.match(r"https?://", query):
-            return await self.fetch_url(query, requester)
+
+            return await self.fetch_url(
+                query,
+                requester
+            )
 
         else:
-            return await self.search_youtube(query, requester)
+
+            return await self.search_youtube(
+                query,
+                requester
+            )
 
     # ─────────────────────────────────────────────────────────
-    # YOUTUBE SEARCH
+    # SEARCH YOUTUBE
     # ─────────────────────────────────────────────────────────
 
     async def search_youtube(
@@ -695,34 +730,51 @@ class Music(commands.Cog):
             data = await loop.run_in_executor(
                 None,
                 lambda: ytdl.extract_info(
-                    f"ytsearch{limit}:{query}",
+                    f"ytsearch:{query}",
                     download=False
                 )
             )
 
+            if not data:
+                return []
+
             entries = data.get("entries", [])
+
+            if not entries:
+                return []
 
             songs = []
 
             for entry in entries:
+
                 if entry:
+
                     songs.append(
-                        Song.from_ytdl(entry, requester)
+                        Song.from_ytdl(
+                            entry,
+                            requester
+                        )
                     )
 
             return songs
 
         except Exception as e:
 
-            logger.error(f"YT Search Error: {e}")
+            logger.error(
+                f"YouTube Search Error: {e}"
+            )
 
             return []
 
     # ─────────────────────────────────────────────────────────
-    # URL FETCH
+    # FETCH URL
     # ─────────────────────────────────────────────────────────
 
-    async def fetch_url(self, url, requester):
+    async def fetch_url(
+        self,
+        url,
+        requester
+    ):
 
         loop = asyncio.get_event_loop()
 
@@ -741,18 +793,28 @@ class Music(commands.Cog):
                 songs = []
 
                 for entry in data["entries"]:
+
                     if entry:
+
                         songs.append(
-                            Song.from_ytdl(entry, requester)
+                            Song.from_ytdl(
+                                entry,
+                                requester
+                            )
                         )
 
                 return songs
 
-            return [Song.from_ytdl(data, requester)]
+            return [
+                Song.from_ytdl(
+                    data,
+                    requester
+                )
+            ]
 
         except Exception as e:
 
-            logger.error(f"URL Error: {e}")
+            logger.error(f"URL Fetch Error: {e}")
 
             return []
 
@@ -760,7 +822,11 @@ class Music(commands.Cog):
     # SPOTIFY
     # ─────────────────────────────────────────────────────────
 
-    async def resolve_spotify(self, url, requester):
+    async def resolve_spotify(
+        self,
+        url,
+        requester
+    ):
 
         songs = []
 
@@ -768,7 +834,10 @@ class Music(commands.Cog):
 
             if "/track/" in url:
 
-                track_id = url.split("/track/")[1].split("?")[0]
+                track_id = (
+                    url.split("/track/")[1]
+                    .split("?")[0]
+                )
 
                 track = self.spotify.track(track_id)
 
@@ -778,7 +847,10 @@ class Music(commands.Cog):
                 )
 
                 songs.extend(
-                    await self.search_youtube(query, requester)
+                    await self.search_youtube(
+                        query,
+                        requester
+                    )
                 )
 
         except Exception as e:
@@ -791,9 +863,13 @@ class Music(commands.Cog):
     # PLAY NEXT
     # ─────────────────────────────────────────────────────────
 
-    async def play_next(self, guild):
+    async def play_next(
+        self,
+        guild
+    ):
 
         player = self.get_player(guild.id)
+
         vc = guild.voice_client
 
         if not vc or not vc.is_connected():
@@ -822,9 +898,15 @@ class Music(commands.Cog):
             stream_url = self.best_audio(data)
 
             if not stream_url:
+
+                logger.error(
+                    f"No stream URL for {song.title}"
+                )
+
                 return await self.play_next(guild)
 
             player.current = song
+
             player.history.append(song)
 
             source = discord.FFmpegPCMAudio(
@@ -841,15 +923,19 @@ class Music(commands.Cog):
             def after_play(error):
 
                 if error:
-                    logger.error(f"Playback Error: {error}")
 
-                fut = asyncio.run_coroutine_threadsafe(
+                    logger.error(
+                        f"Playback Error: {error}"
+                    )
+
+                future = asyncio.run_coroutine_threadsafe(
                     self.play_next(guild),
                     self.bot.loop
                 )
 
                 try:
-                    fut.result()
+                    future.result()
+
                 except:
                     pass
 
@@ -874,7 +960,7 @@ class Music(commands.Cog):
             await self.play_next(guild)
 
     # ─────────────────────────────────────────────────────────
-    # AUDIO FORMAT
+    # BEST AUDIO
     # ─────────────────────────────────────────────────────────
 
     def best_audio(self, data):
@@ -889,9 +975,11 @@ class Music(commands.Cog):
                 fmt.get("acodec") != "none"
                 and fmt.get("url")
             ):
+
                 audio_formats.append(fmt)
 
         if audio_formats:
+
             return audio_formats[-1]["url"]
 
         return data.get("url")
@@ -904,7 +992,11 @@ class Music(commands.Cog):
         name="skip",
         description="Skip current song"
     )
-    async def skip(self, interaction):
+
+    async def skip(
+        self,
+        interaction
+    ):
 
         vc = interaction.guild.voice_client
 
@@ -922,7 +1014,7 @@ class Music(commands.Cog):
 
             await interaction.response.send_message(
                 embed=MusicEmbed.error(
-                    "Nothing playing"
+                    "Nothing is playing"
                 ),
                 ephemeral=True
             )
@@ -935,17 +1027,26 @@ class Music(commands.Cog):
         name="stop",
         description="Stop playback"
     )
-    async def stop(self, interaction):
 
-        player = self.get_player(interaction.guild_id)
+    async def stop(
+        self,
+        interaction
+    ):
+
+        player = self.get_player(
+            interaction.guild_id
+        )
 
         player.queue = asyncio.Queue()
+
         player.current = None
 
         vc = interaction.guild.voice_client
 
         if vc:
+
             vc.stop()
+
             await vc.disconnect()
 
         await interaction.response.send_message(
@@ -955,6 +1056,76 @@ class Music(commands.Cog):
         )
 
     # ─────────────────────────────────────────────────────────
+    # PAUSE
+    # ─────────────────────────────────────────────────────────
+
+    @app_commands.command(
+        name="pause",
+        description="Pause playback"
+    )
+
+    async def pause(
+        self,
+        interaction
+    ):
+
+        vc = interaction.guild.voice_client
+
+        if vc and vc.is_playing():
+
+            vc.pause()
+
+            await interaction.response.send_message(
+                embed=MusicEmbed.success(
+                    "⏸️ Paused"
+                )
+            )
+
+        else:
+
+            await interaction.response.send_message(
+                embed=MusicEmbed.error(
+                    "Nothing is playing"
+                ),
+                ephemeral=True
+            )
+
+    # ─────────────────────────────────────────────────────────
+    # RESUME
+    # ─────────────────────────────────────────────────────────
+
+    @app_commands.command(
+        name="resume",
+        description="Resume playback"
+    )
+
+    async def resume(
+        self,
+        interaction
+    ):
+
+        vc = interaction.guild.voice_client
+
+        if vc and vc.is_paused():
+
+            vc.resume()
+
+            await interaction.response.send_message(
+                embed=MusicEmbed.success(
+                    "▶️ Resumed"
+                )
+            )
+
+        else:
+
+            await interaction.response.send_message(
+                embed=MusicEmbed.error(
+                    "Playback is not paused"
+                ),
+                ephemeral=True
+            )
+
+    # ─────────────────────────────────────────────────────────
     # VOLUME
     # ─────────────────────────────────────────────────────────
 
@@ -962,6 +1133,7 @@ class Music(commands.Cog):
         name="volume",
         description="Set volume"
     )
+
     async def volume(
         self,
         interaction,
@@ -972,23 +1144,58 @@ class Music(commands.Cog):
 
             return await interaction.response.send_message(
                 embed=MusicEmbed.error(
-                    "Volume must be 0-200"
+                    "Volume must be between 0 and 200"
                 ),
                 ephemeral=True
             )
 
-        player = self.get_player(interaction.guild_id)
+        player = self.get_player(
+            interaction.guild_id
+        )
 
         player.volume = level / 100
 
         vc = interaction.guild.voice_client
 
         if vc and vc.source:
+
             vc.source.volume = player.volume
 
         await interaction.response.send_message(
             embed=MusicEmbed.success(
-                f"🔊 Volume: {level}%"
+                f"🔊 Volume set to {level}%"
+            )
+        )
+
+    # ─────────────────────────────────────────────────────────
+    # SHUFFLE
+    # ─────────────────────────────────────────────────────────
+
+    @app_commands.command(
+        name="shuffle",
+        description="Shuffle queue"
+    )
+
+    async def shuffle(
+        self,
+        interaction
+    ):
+
+        player = self.get_player(
+            interaction.guild_id
+        )
+
+        items = list(player.queue._queue)
+
+        random.shuffle(items)
+
+        player.queue._queue.clear()
+
+        player.queue._queue.extend(items)
+
+        await interaction.response.send_message(
+            embed=MusicEmbed.success(
+                f"🔀 Shuffled {len(items)} songs"
             )
         )
 
@@ -997,4 +1204,7 @@ class Music(commands.Cog):
 # ─────────────────────────────────────────────────────────────
 
 async def setup(bot):
-    await bot.add_cog(Music(bot))
+
+    await bot.add_cog(
+        Music(bot)
+    )
